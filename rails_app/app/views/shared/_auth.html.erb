@@ -1,0 +1,109 @@
+<%#
+  Interactive login / signup card.
+  Locals:
+    sign_in_resource - User for the sign in form (carries errors after a failed login)
+    sign_up_resource - User for the sign up form (carries errors after a failed registration)
+    active_tab       - :sign_in or :sign_up (which panel shows first)
+%>
+<div class="min-h-screen flex bg-slate-50">
+  <%# ---- Left brand / hero panel ---- %>
+  <div class="hidden lg:flex lg:w-1/2 relative overflow-hidden bg-gradient-to-br from-indigo-600 via-purple-600 to-fuchsia-600">
+    <div class="absolute inset-0 opacity-20"
+         style="background-image: radial-gradient(circle at 20% 30%, white 1px, transparent 1px); background-size: 28px 28px;"></div>
+    <div class="relative z-10 flex flex-col justify-between p-12 text-white">
+      <div class="flex items-center gap-3">
+        <div class="h-11 w-11 rounded-xl bg-white/15 backdrop-blur flex items-center justify-center text-2xl">📚</div>
+        <span class="text-xl font-semibold tracking-tight">Library&nbsp;AI</span>
+      </div>
+      <div>
+        <h1 class="text-4xl font-bold leading-tight">Read smarter.<br>Ask anything.</h1>
+        <p class="mt-4 max-w-md text-white/80 text-lg">
+          Your AI-powered digital library. Upload books, read them, and ask grounded questions answered straight from the pages.
+        </p>
+        <ul class="mt-8 space-y-3 text-white/90">
+          <li class="flex items-center gap-3"><span class="text-emerald-300">✓</span> AI answers grounded in real book content</li>
+          <li class="flex items-center gap-3"><span class="text-emerald-300">✓</span> Read PDFs in a clean reader</li>
+          <li class="flex items-center gap-3"><span class="text-emerald-300">✓</span> Private — runs on your own AI stack</li>
+        </ul>
+      </div>
+      <p class="text-white/50 text-sm">© <%= Time.current.year %> Library AI</p>
+    </div>
+  </div>
+
+  <%# ---- Right auth panel ---- %>
+  <div class="flex w-full lg:w-1/2 items-center justify-center p-6 sm:p-10"
+       data-controller="auth-tabs"
+       data-auth-tabs-active-value="<%= active_tab %>">
+    <div class="w-full max-w-md">
+      <%# Mobile brand %>
+      <div class="lg:hidden flex items-center gap-3 mb-8 justify-center">
+        <div class="h-10 w-10 rounded-xl bg-indigo-600 flex items-center justify-center text-xl">📚</div>
+        <span class="text-xl font-semibold text-slate-800">Library AI</span>
+      </div>
+
+      <%# Tab switch %>
+      <div class="relative grid grid-cols-2 p-1 mb-8 rounded-xl bg-slate-100 text-sm font-medium">
+        <button type="button"
+                data-auth-tabs-target="signInTab"
+                data-action="auth-tabs#showSignIn"
+                class="relative z-10 py-2.5 rounded-lg transition-colors">Sign In</button>
+        <button type="button"
+                data-auth-tabs-target="signUpTab"
+                data-action="auth-tabs#showSignUp"
+                class="relative z-10 py-2.5 rounded-lg transition-colors">Sign Up</button>
+        <span data-auth-tabs-target="slider"
+              class="absolute top-1 bottom-1 left-1 w-[calc(50%-0.25rem)] rounded-lg bg-white shadow-sm transition-transform duration-300 ease-out"></span>
+      </div>
+
+      <%# ---------- Sign In ---------- %>
+      <div data-auth-tabs-target="signInPanel">
+        <h2 class="text-2xl font-bold text-slate-800">Welcome back</h2>
+        <p class="text-slate-500 mt-1 mb-6">Sign in to continue to your library.</p>
+
+        <%= render "shared/auth_errors", resource: sign_in_resource %>
+
+        <%= form_with model: sign_in_resource, url: user_session_path, scope: :user, html: { class: "space-y-4" } do |f| %>
+          <div>
+            <%= f.label :email, class: "block text-sm font-medium text-slate-700 mb-1" %>
+            <%= f.email_field :email, autofocus: active_tab == :sign_in, autocomplete: "email",
+                  placeholder: "you@example.com", class: auth_input_classes %>
+          </div>
+          <%= render "shared/password_field", f: f, field: :password, label: "Password",
+                autocomplete: "current-password" %>
+          <div class="flex items-center justify-between">
+            <label class="flex items-center gap-2 text-sm text-slate-600">
+              <%= f.check_box :remember_me, class: "rounded border-slate-300 text-indigo-600 focus:ring-indigo-500" %>
+              Remember me
+            </label>
+            <%= link_to "Forgot password?", new_user_password_path, class: "text-sm text-indigo-600 hover:text-indigo-700" %>
+          </div>
+          <%= f.submit "Sign In", class: auth_button_classes %>
+        <% end %>
+      </div>
+
+      <%# ---------- Sign Up ---------- %>
+      <div data-auth-tabs-target="signUpPanel" class="hidden">
+        <h2 class="text-2xl font-bold text-slate-800">Create your account</h2>
+        <p class="text-slate-500 mt-1 mb-6">Start reading and asking in minutes.</p>
+
+        <%= render "shared/auth_errors", resource: sign_up_resource %>
+
+        <%= form_with model: sign_up_resource, url: user_registration_path, scope: :user, html: { class: "space-y-4" } do |f| %>
+          <div>
+            <%= f.label :name, class: "block text-sm font-medium text-slate-700 mb-1" %>
+            <%= f.text_field :name, autocomplete: "name", placeholder: "Jane Reader", class: auth_input_classes %>
+          </div>
+          <div>
+            <%= f.label :email, class: "block text-sm font-medium text-slate-700 mb-1" %>
+            <%= f.email_field :email, autocomplete: "email", placeholder: "you@example.com", class: auth_input_classes %>
+          </div>
+          <%= render "shared/password_field", f: f, field: :password, label: "Password",
+                autocomplete: "new-password", placeholder: "At least 6 characters" %>
+          <%= render "shared/password_field", f: f, field: :password_confirmation,
+                label: "Confirm password", autocomplete: "new-password" %>
+          <%= f.submit "Create Account", class: auth_button_classes %>
+        <% end %>
+      </div>
+    </div>
+  </div>
+</div>

@@ -1,0 +1,5 @@
+<%# On a failed sign up Devise re-renders here with `resource` carrying the errors. %>
+<%= render "shared/auth",
+      sign_in_resource: User.new,
+      sign_up_resource: resource,
+      active_tab: :sign_up %>
