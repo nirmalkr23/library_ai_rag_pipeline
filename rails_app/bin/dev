@@ -5,6 +5,25 @@ if ! gem list foreman -i --silent; then
   gem install foreman
 fi
 
+# Ensure the Docker services (Postgres + Redis) are running before the app,
+# and stop them again when this script exits (Ctrl+C) — so `bin/dev` starts
+# everything and Ctrl+C stops everything.
+COMPOSE_FILE="$(CDPATH= cd "$(dirname "$0")/.." && pwd)/../docker-compose.yml"
+HAVE_DOCKER=""
+if command -v docker >/dev/null 2>&1 && [ -f "$COMPOSE_FILE" ]; then
+  HAVE_DOCKER="1"
+  echo "Starting Docker services (postgres, redis)..."
+  docker compose -f "$COMPOSE_FILE" up -d
+fi
+
+stop_docker() {
+  if [ -n "$HAVE_DOCKER" ]; then
+    echo "\nStopping Docker services (postgres, redis)..."
+    docker compose -f "$COMPOSE_FILE" stop
+  fi
+}
+trap stop_docker EXIT INT TERM
+
 # Default to port 3000 if not specified
 export PORT="${PORT:-3000}"
 
@@ -13,4 +32,4 @@ export PORT="${PORT:-3000}"
 export RUBY_DEBUG_OPEN="true"
 export RUBY_DEBUG_LAZY="true"
 
-exec foreman start -f Procfile.dev "$@"
+foreman start -f Procfile.dev "$@"
