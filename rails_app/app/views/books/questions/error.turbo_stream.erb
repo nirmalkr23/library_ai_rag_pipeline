@@ -1,0 +1,9 @@
+<%# Drop the typing indicator and show a friendly error bubble in the chat. %>
+<%= turbo_stream.remove "thinking" %>
+<%= turbo_stream.append "chat-messages" do %>
+  <div class="flex justify-start">
+    <div class="max-w-[90%] rounded-2xl rounded-bl-sm bg-red-500/10 ring-1 ring-red-500/30 px-3.5 py-2.5 text-sm text-red-200 leading-relaxed">
+      <%= @error_message %>
+    </div>
+  </div>
+<% end %>

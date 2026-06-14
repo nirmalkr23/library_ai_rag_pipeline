@@ -23,7 +23,27 @@ module Books
       end
     rescue StandardError => e
       Rails.logger.error("[Books::Questions] #{e.class}: #{e.message}")
-      redirect_to book_path(@book), alert: "Sorry — couldn't answer that right now. (#{e.message})"
+      @error_message = friendly_error(e)
+      respond_to do |format|
+        format.turbo_stream { render :error, status: :service_unavailable }
+        format.html { redirect_to book_path(@book), alert: @error_message }
+      end
+    end
+
+    private
+
+    # Map technical errors to calm, user-facing copy. Never leak raw API output.
+    def friendly_error(error)
+      case error
+      when GeminiClient::QuotaError
+        "The AI is taking a breather — its usage limit was reached. Please try again in a few minutes."
+      when GeminiClient::AuthError
+        "The AI service isn't configured correctly. Please let an admin know."
+      when GeminiClient::ModelError
+        "The AI model is currently unavailable. Please let an admin know."
+      else
+        "Sorry — something went wrong answering that. Please try again."
+      end
     end
   end
 end

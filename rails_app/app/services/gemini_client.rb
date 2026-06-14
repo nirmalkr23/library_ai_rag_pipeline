@@ -12,7 +12,18 @@ class GeminiClient
   EMBED_BATCH = 100 # Gemini batchEmbedContents cap
   EMBED_DIM = 768   # must match the book_chunks.embedding vector(768) column
 
-  class Error < StandardError; end
+  class Error < StandardError
+    attr_reader :status
+
+    def initialize(message, status: nil)
+      @status = status
+      super(message)
+    end
+  end
+
+  class QuotaError < Error; end      # 429 — rate limit / quota exceeded
+  class AuthError < Error; end       # 401/403 — bad key / blocked
+  class ModelError < Error; end      # 404 — model not found/unsupported
 
   def initialize(api_key: ENV["GEMINI_API_KEY"],
                  embedding_model: ENV.fetch("GEMINI_EMBEDDING_MODEL", "gemini-embedding-001"),
@@ -78,9 +89,19 @@ class GeminiClient
     end
 
     unless res.is_a?(Net::HTTPSuccess)
-      raise Error, "Gemini #{path} failed: #{res.code} #{res.body&.slice(0, 500)}"
+      raise error_for(res.code.to_i, "Gemini #{path} failed: #{res.code} #{res.body&.slice(0, 300)}")
     end
 
     JSON.parse(res.body)
+  end
+
+  def error_for(status, message)
+    klass = case status
+            when 429 then QuotaError
+            when 401, 403 then AuthError
+            when 404 then ModelError
+            else Error
+            end
+    klass.new(message, status: status)
   end
 end
