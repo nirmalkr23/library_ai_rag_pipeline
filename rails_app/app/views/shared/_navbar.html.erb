@@ -1,0 +1,31 @@
+<header class="sticky top-0 z-30 border-b border-white/10 bg-slate-950/80 backdrop-blur">
+  <div class="max-w-6xl mx-auto px-6 h-16 flex items-center justify-between">
+    <%= link_to dashboard_path, class: "flex items-center gap-3 group" do %>
+      <div class="h-9 w-9 rounded-lg bg-gradient-to-br from-indigo-500 to-fuchsia-500 flex items-center justify-center text-lg">📚</div>
+      <span class="font-semibold text-slate-100 group-hover:text-white">Library AI</span>
+    <% end %>
+
+    <nav class="flex items-center gap-2 sm:gap-4 text-sm">
+      <%= link_to "Library", books_path,
+            class: "px-3 py-1.5 rounded-lg text-slate-300 hover:text-white hover:bg-white/5 transition" %>
+      <% if current_user&.admin? %>
+        <%= link_to "Manage Books", admin_books_path,
+              class: "px-3 py-1.5 rounded-lg text-slate-300 hover:text-white hover:bg-white/5 transition" %>
+        <%= link_to new_admin_book_path, class: "px-3 py-1.5 rounded-lg bg-indigo-500 text-white font-medium hover:bg-indigo-400 transition" do %>
+          + Upload
+        <% end %>
+      <% end %>
+
+      <div class="ml-2 flex items-center gap-3 pl-3 border-l border-white/10">
+        <span class="hidden sm:flex items-center gap-2 text-slate-400">
+          <%= current_user.name.presence || current_user.email %>
+          <span class="rounded-full bg-indigo-500/15 text-indigo-300 px-2 py-0.5 text-xs font-medium ring-1 ring-indigo-500/20">
+            <%= current_user.role %>
+          </span>
+        </span>
+        <%= button_to "Sign out", destroy_user_session_path, method: :delete,
+              class: "rounded-lg border border-white/10 px-3 py-1.5 text-slate-300 hover:bg-white/5 hover:text-white transition cursor-pointer" %>
+      </div>
+    </nav>
+  </div>
+</header>

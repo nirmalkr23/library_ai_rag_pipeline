@@ -1,0 +1,109 @@
+<div class="min-h-screen bg-slate-950 text-slate-100">
+  <%= render "shared/navbar" %>
+
+  <main class="max-w-2xl mx-auto px-6 py-12">
+    <div class="mb-8">
+      <%= link_to admin_books_path, class: "text-sm text-slate-400 hover:text-slate-200 inline-flex items-center gap-1" do %>
+        ← Back to books
+      <% end %>
+      <h1 class="text-3xl font-bold text-white mt-3">Upload a book</h1>
+      <p class="text-slate-400 mt-2">Drop a PDF below. We'll process it for AI Q&A after upload.</p>
+    </div>
+
+    <% if @book.errors.any? %>
+      <div class="mb-6 rounded-lg border border-red-500/30 bg-red-500/10 px-4 py-3 text-sm text-red-300">
+        <ul class="list-disc list-inside space-y-0.5">
+          <% @book.errors.full_messages.each do |msg| %><li><%= msg %></li><% end %>
+        </ul>
+      </div>
+    <% end %>
+
+    <%= form_with model: @book, url: admin_books_path, html: { multipart: true, class: "space-y-6" },
+          data: { controller: "file-upload processing-overlay",
+                  action: "turbo:submit-start->processing-overlay#show",
+                  file_upload_active_class: "border-indigo-400 bg-indigo-500/10" } do |f| %>
+
+      <%# ---- Dropzone ---- %>
+      <div data-file-upload-target="dropzone"
+           data-action="dragover->file-upload#dragover dragleave->file-upload#dragleave drop->file-upload#drop click->file-upload#open"
+           class="group relative cursor-pointer rounded-2xl border-2 border-dashed border-white/15 bg-white/5 p-10 text-center transition hover:border-white/25 hover:bg-white/[0.07]">
+
+        <%= f.file_field :pdf, accept: "application/pdf", class: "hidden",
+              data: { file_upload_target: "input", action: "file-upload#change" } %>
+
+        <%# Empty prompt %>
+        <div data-file-upload-target="prompt">
+          <div class="mx-auto h-14 w-14 rounded-2xl bg-indigo-500/15 ring-1 ring-indigo-500/30 flex items-center justify-center mb-4">
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.7"
+                 stroke="currentColor" class="w-7 h-7 text-indigo-300">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75V16.5m-13.5-9L12 3m0 0 4.5 4.5M12 3v13.5" />
+            </svg>
+          </div>
+          <p class="text-slate-200 font-medium">Drag &amp; drop your PDF here</p>
+          <p class="text-slate-500 text-sm mt-1">or <span class="text-indigo-400">browse files</span> · PDF only</p>
+        </div>
+
+        <%# Selected file preview %>
+        <div data-file-upload-target="preview" class="hidden">
+          <div class="flex items-center gap-4 text-left rounded-xl bg-slate-900/60 ring-1 ring-white/10 p-4">
+            <div class="h-12 w-12 shrink-0 rounded-lg bg-red-500/15 ring-1 ring-red-500/30 flex items-center justify-center text-red-300 font-bold text-xs">PDF</div>
+            <div class="min-w-0 flex-1">
+              <p data-file-upload-target="filename" class="truncate font-medium text-slate-100"></p>
+              <p data-file-upload-target="filesize" class="text-sm text-slate-500"></p>
+            </div>
+            <button type="button" data-action="file-upload#clear"
+                    class="shrink-0 rounded-lg p-2 text-slate-400 hover:text-red-300 hover:bg-white/5 transition"
+                    aria-label="Remove file">
+              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.8"
+                   stroke="currentColor" class="w-5 h-5">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M6 18 18 6M6 6l12 12" />
+              </svg>
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <%# ---- Metadata ---- %>
+      <div class="grid sm:grid-cols-2 gap-4">
+        <div>
+          <%= f.label :title, class: "block text-sm font-medium text-slate-300 mb-1" %>
+          <%= f.text_field :title, placeholder: "Book title",
+                data: { file_upload_target: "title" }, class: auth_input_classes %>
+        </div>
+        <div>
+          <%= f.label :author, class: "block text-sm font-medium text-slate-300 mb-1" %>
+          <%= f.text_field :author, placeholder: "Author (optional)", class: auth_input_classes %>
+        </div>
+      </div>
+
+      <div class="flex items-center justify-end gap-3 pt-2">
+        <%= link_to "Cancel", admin_books_path,
+              class: "rounded-lg px-4 py-2.5 text-slate-300 hover:text-white hover:bg-white/5 transition" %>
+        <%= f.submit "Upload book",
+              class: "rounded-lg bg-indigo-500 px-5 py-2.5 font-semibold text-white shadow-lg shadow-indigo-500/20 hover:bg-indigo-400 transition cursor-pointer" %>
+      </div>
+
+      <%# ---- Processing overlay (shown while the upload request runs) ---- %>
+      <div data-processing-overlay-target="overlay"
+           class="hidden fixed inset-0 z-50 flex items-center justify-center bg-slate-950/80 backdrop-blur-sm">
+        <div class="w-full max-w-sm mx-4 rounded-2xl border border-white/10 bg-slate-900 p-8 text-center shadow-2xl">
+          <%# Animated rings %>
+          <div class="relative mx-auto h-20 w-20 mb-6">
+            <span class="absolute inset-0 rounded-full border-4 border-indigo-500/20"></span>
+            <span class="absolute inset-0 rounded-full border-4 border-transparent border-t-indigo-400 animate-spin"></span>
+            <span class="absolute inset-3 rounded-full border-4 border-transparent border-t-fuchsia-400 animate-spin" style="animation-duration:1.4s;animation-direction:reverse;"></span>
+            <span class="absolute inset-0 flex items-center justify-center text-2xl">📖</span>
+          </div>
+          <h3 class="text-lg font-semibold text-white">Processing your book</h3>
+          <p data-processing-overlay-target="step" class="mt-2 text-sm text-indigo-300 transition-all">Uploading PDF…</p>
+          <%# Indeterminate progress bar %>
+          <div class="mt-6 h-1.5 w-full overflow-hidden rounded-full bg-white/10">
+            <div class="h-full w-1/3 rounded-full bg-gradient-to-r from-indigo-400 to-fuchsia-400 animate-pulse"
+                 style="animation:loadbar 1.6s ease-in-out infinite;"></div>
+          </div>
+          <p class="mt-4 text-xs text-slate-500">This can take a moment — please keep this tab open.</p>
+        </div>
+      </div>
+    <% end %>
+  </main>
+</div>

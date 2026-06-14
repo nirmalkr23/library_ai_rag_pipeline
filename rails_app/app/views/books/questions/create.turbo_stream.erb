@@ -1,0 +1,6 @@
+<%# Remove the empty-state and the temporary "thinking" bubble, then append the answer. %>
+<%= turbo_stream.remove "chat-empty" %>
+<%= turbo_stream.remove "thinking" %>
+<%= turbo_stream.append "chat-messages" do %>
+  <%= render "books/chat_history", chat_history: @chat_history %>
+<% end %>

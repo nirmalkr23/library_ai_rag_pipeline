@@ -1,0 +1,64 @@
+<div class="h-screen flex flex-col bg-slate-950 text-slate-100">
+  <%= render "shared/navbar" %>
+
+  <div class="flex-1 min-h-0 max-w-[1600px] w-full mx-auto px-4 sm:px-6 py-4 grid grid-cols-1 lg:grid-cols-5 gap-4">
+
+    <%# ---- PDF reader ---- %>
+    <section class="lg:col-span-3 min-h-0 flex flex-col rounded-2xl border border-white/10 bg-white/5 overflow-hidden">
+      <div class="flex items-center justify-between px-4 py-3 border-b border-white/10">
+        <div class="min-w-0">
+          <h1 class="font-semibold text-white truncate"><%= @book.title %></h1>
+          <p class="text-xs text-slate-400 truncate"><%= @book.author.presence || "Unknown author" %></p>
+        </div>
+        <%= link_to "Open ↗", rails_blob_path(@book.pdf, disposition: "inline"), target: "_blank",
+              class: "text-sm text-indigo-300 hover:text-indigo-200 shrink-0" %>
+      </div>
+      <iframe src="<%= rails_blob_path(@book.pdf, disposition: "inline") %>"
+              class="flex-1 w-full bg-slate-900" title="PDF reader"></iframe>
+    </section>
+
+    <%# ---- AI chat ---- %>
+    <section class="lg:col-span-2 min-h-0 flex flex-col rounded-2xl border border-white/10 bg-white/5 overflow-hidden"
+             data-controller="chat">
+      <div class="flex items-center gap-2 px-4 py-3 border-b border-white/10">
+        <span class="h-8 w-8 rounded-lg bg-gradient-to-br from-indigo-500 to-fuchsia-500 flex items-center justify-center text-sm">✨</span>
+        <div>
+          <h2 class="font-semibold text-white text-sm">Ask this book</h2>
+          <p class="text-xs text-slate-400">Answers grounded in the text</p>
+        </div>
+      </div>
+
+      <%# Messages %>
+      <div id="chat-messages" data-chat-target="messages"
+           class="flex-1 min-h-0 overflow-y-auto px-4 py-4 space-y-4">
+        <% if @chat_histories.empty? %>
+          <div id="chat-empty" data-chat-target="empty" class="text-center text-slate-500 text-sm mt-8">
+            <div class="text-3xl mb-2">💬</div>
+            Ask anything about this book.<br>e.g. “Summarize chapter 1” or “What is the main argument?”
+          </div>
+        <% end %>
+        <% @chat_histories.each do |ch| %>
+          <%= render "books/chat_history", chat_history: ch %>
+        <% end %>
+      </div>
+
+      <%# Input %>
+      <div class="border-t border-white/10 p-3">
+        <%= form_with model: [@book, @chat_history], url: book_questions_path(@book),
+              data: { controller: "chat-form", action: "turbo:submit-start->chat#thinking turbo:submit-end->chat-form#reset" } do |f| %>
+          <div class="flex items-end gap-2">
+            <%= f.text_area :question, rows: 1, placeholder: "Ask a question…",
+                  data: { chat_form_target: "input", action: "keydown.enter->chat-form#submitOnEnter" },
+                  class: "flex-1 resize-none rounded-xl border border-white/10 bg-slate-900/60 px-3.5 py-2.5 text-slate-100 placeholder:text-slate-500 focus:border-indigo-400 focus:ring-2 focus:ring-indigo-500/30 focus:outline-none transition max-h-32" %>
+            <%= f.button type: :submit,
+                  class: "shrink-0 rounded-xl bg-indigo-500 p-2.5 text-white hover:bg-indigo-400 transition cursor-pointer disabled:opacity-50" do %>
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="w-5 h-5">
+                <path d="M3.4 20.4l17.45-7.48a1 1 0 000-1.84L3.4 3.6a.993.993 0 00-1.39.91L2 9.12c0 .5.37.93.87.99L17 12 2.87 13.88c-.5.07-.87.5-.87 1l.01 4.61c0 .71.73 1.2 1.39.91z"/>
+              </svg>
+            <% end %>
+          </div>
+        <% end %>
+      </div>
+    </section>
+  </div>
+</div>

@@ -38,5 +38,8 @@ module RailsApp
 
     # Don't generate system test files.
     config.generators.system_tests = nil
+
+    # Background jobs run on Sidekiq (Redis-backed).
+    config.active_job.queue_adapter = :sidekiq
   end
 end

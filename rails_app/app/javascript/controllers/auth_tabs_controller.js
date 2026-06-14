@@ -28,9 +28,9 @@ export default class extends Controller {
   }
 
   activate(on, off) {
-    on.classList.add("text-slate-900")
-    on.classList.remove("text-slate-500")
-    off.classList.add("text-slate-500")
-    off.classList.remove("text-slate-900")
+    on.classList.add("text-white")
+    on.classList.remove("text-slate-400")
+    off.classList.add("text-slate-400")
+    off.classList.remove("text-white")
   }
 }
